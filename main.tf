@@ -15,10 +15,10 @@ terraform {
   required_version = ">= 1.1.0"
 
   cloud {
-    organization = "example-org-26cc68"
+    organization = "REPLACE_ME"
 
     workspaces {
-      name = "ControlTowerDeployment"
+      name = "learn-terraform-github-actions"
     }
   }
 }
