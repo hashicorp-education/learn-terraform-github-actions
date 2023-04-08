@@ -9,7 +9,7 @@ on:
 jobs:
   terraform:
     name: "Terraform"
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, vault]
     permissions:
       pull-requests: write
     steps:
