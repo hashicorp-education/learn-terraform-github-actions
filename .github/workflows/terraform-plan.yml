@@ -64,7 +64,7 @@ jobs:
                \`\`\`
                [Terraform Cloud Plan](${{ steps.plan-run.outputs.run_link }})
                `;
-            // 3. Delete previous comment so PR timeline makes sense
+            // 2. Delete previous comment so PR timeline makes sense
             if (botComment) {
               github.rest.issues.deleteComment({
                 owner: context.repo.owner,
