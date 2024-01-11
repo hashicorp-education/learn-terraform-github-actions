@@ -18,7 +18,7 @@ terraform {
     organization = "vaibslearning" 
 
     workspaces {
-      name = "demo-github-actions"
+      name = "learn-terraform-github-actions"
     }
   }
 }
