@@ -13,6 +13,14 @@ terraform {
     }
   }
   required_version = ">= 1.1.0"
+
+  cloud {
+    organization = "vaibslearning"
+
+    workspaces {
+      name = "demo-github-actions"
+    }
+  }
 }
 
 provider "aws" {
