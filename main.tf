@@ -15,7 +15,7 @@ terraform {
   required_version = ">= 1.1.0"
 
   cloud {
-    organization = "vaibslearning"
+    organization = "vaibslearning" 
 
     workspaces {
       name = "demo-github-actions"
