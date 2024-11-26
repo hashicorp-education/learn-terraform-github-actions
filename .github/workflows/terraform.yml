@@ -6,6 +6,9 @@ on:
       - main
   pull_request:
 
+env:
+  TF_CLOUD_TOKEN: ${{ secrets.TF_CLOUD_TOKEN }}
+
 jobs:
   terraform:
     name: "Terraform"
