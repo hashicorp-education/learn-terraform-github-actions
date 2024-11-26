@@ -7,7 +7,7 @@ on:
   pull_request:
 
 env:
-  TF_CLOUD_TOKEN: ${{ secrets.TF_CLOUD_TOKEN }}
+  TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
 
 jobs:
   terraform:
