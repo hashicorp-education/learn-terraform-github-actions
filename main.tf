@@ -15,10 +15,10 @@ terraform {
   required_version = ">= 1.1.0"
 
   cloud {
-    organization = "REPLACE_ME"
+    organization = "NV5-Geospatial"
 
     workspaces {
-      name = "gh-actions-demo"
+      name = "chandlers-scratch-workspace"
     }
   }
 }
