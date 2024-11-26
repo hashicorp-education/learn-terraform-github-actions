@@ -6,9 +6,6 @@ on:
       - main
   pull_request:
 
-env:
-  TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
-
 jobs:
   terraform:
     name: "Terraform"
@@ -23,7 +20,7 @@ jobs:
         uses: hashicorp/setup-terraform@v1
         with:
           # terraform_version: 0.13.0:
-          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+          cli_config_credentials_token: ${{ secrets.TF_CLOUD_TOKEN }}
 
       - name: Terraform Format
         id: fmt
