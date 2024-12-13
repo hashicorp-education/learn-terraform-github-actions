@@ -27,6 +27,7 @@ terraform {
 #   region = "us-west-2"
 # }
 
+<<<<<<< HEAD
 # resource "aws_security_group" "github-actions" {
 #   name        = "github-actions"
 #   description = "This is just a test for a github-actions tutorial."
@@ -35,3 +36,17 @@ terraform {
 #     Name = "github-actions"
 #   }
 # }
+=======
+resource "aws_vpc" "main" {
+  cidr_block = "10.0.0.0/16"
+}
+
+resource "aws_security_group" "github-actions" {
+  name        = "github-actions"
+  description = "This is just a test for a github-actions tutorial."
+  vpc_id      = aws_vpc.main.id
+  tags = {
+    Name = "github-actions"
+  }
+}
+>>>>>>> 54acbdb39f637d74c8bfa397c6c834e186f0d7ad
