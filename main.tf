@@ -34,7 +34,7 @@ resource "aws_vpc" "main" {
 resource "aws_security_group" "github-actions" {
   name        = "github-actions"
   description = "This is just a test for a github-actions tutorial."
-  vpc_id = aws_vpc.main.id
+  vpc_id      = aws_vpc.main.id
   tags = {
     Name = "github-actions"
   }
