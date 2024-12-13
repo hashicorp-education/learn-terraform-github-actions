@@ -30,7 +30,6 @@ provider "aws" {
 resource "aws_security_group" "github-actions" {
   name        = "github-actions"
   description = "This is just a test for a github-actions tutorial."
-  vpc_id      = aws_vpc.main.id
 
   tags = {
     Name = "github-actions"
