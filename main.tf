@@ -23,15 +23,15 @@ terraform {
   }
 }
 
-provider "aws" {
-  region = "us-west-2"
-}
+# provider "aws" {
+#   region = "us-west-2"
+# }
 
-resource "aws_security_group" "github-actions" {
-  name        = "github-actions"
-  description = "This is just a test for a github-actions tutorial."
+# resource "aws_security_group" "github-actions" {
+#   name        = "github-actions"
+#   description = "This is just a test for a github-actions tutorial."
 
-  tags = {
-    Name = "github-actions"
-  }
-}
+#   tags = {
+#     Name = "github-actions"
+#   }
+# }
