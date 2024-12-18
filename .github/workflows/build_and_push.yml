@@ -30,8 +30,6 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const context = github.context;
-
             // Check if this is a comment on a pull request
             const isPullRequest = context.payload.issue && context.payload.issue.pull_request;
             if (!isPullRequest) {
