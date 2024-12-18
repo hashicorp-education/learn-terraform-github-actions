@@ -1,10 +1,17 @@
 name: "Terraform"
 
+name: "Terraform"
+
 on:
-  push:
-    branches:
-      - main
   pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+  push:
+  issue_comment:
+    types:
+      - created
 
 jobs:
   fetch-build-option:
@@ -101,6 +108,7 @@ jobs:
             });
 
   terraform:
+    if: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
     needs: fetch-build-option
     name: "Terraform"
     runs-on: ubuntu-latest
