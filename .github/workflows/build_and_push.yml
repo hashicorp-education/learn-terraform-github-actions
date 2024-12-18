@@ -6,7 +6,7 @@ on:
       # - synchronize
       - reopened
   push:
-    branch:
+    branches:
       - main
 
 jobs:
