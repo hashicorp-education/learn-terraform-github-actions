@@ -3,7 +3,7 @@ on:
   pull_request:
     types:
       - opened
-      - synchronize
+      # - synchronize
       - reopened
   push:
     branch:
@@ -30,17 +30,18 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const pr = context.payload.pull_request || null;
-            const issue = context.payload.issue || pr;
+            const context = github.context;
 
-            if (!issue || !issue.number) {
-              console.log("No valid issue or pull request found in the context payload.");
+            // Check if this is a comment on a pull request
+            const isPullRequest = context.payload.issue && context.payload.issue.pull_request;
+            if (!isPullRequest) {
+              console.log("This is not a pull request. Exiting gracefully.");
               core.setOutput("build_option", "none");
               core.setOutput("option_found", false);
               return;
             }
 
-            const prNumber = issue.number;
+            const prNumber = context.payload.issue.number;
             const repoOwner = context.repo.owner;
             const repoName = context.repo.repo;
 
@@ -49,25 +50,19 @@ jobs:
             let buildOption = "none"; // Default build option
             let optionFound = false; // Flag for whether an option is found
 
-            // Check PR body for the build option
-            if (pr?.body && optionRegex.test(pr.body)) {
-              optionFound = true;
-              buildOption = pr.body.match(optionRegex)[1].toLowerCase();
-            } else {
-              // If not found in the PR body, check comments
-              const comments = await github.rest.issues.listComments({
-                owner: repoOwner,
-                repo: repoName,
-                issue_number: prNumber,
-              });
+            // Check PR comments for the build option
+            const comments = await github.rest.issues.listComments({
+              owner: repoOwner,
+              repo: repoName,
+              issue_number: prNumber,
+            });
 
-              for (const comment of comments.data) {
-                const match = comment.body.match(optionRegex);
-                if (match) {
-                  optionFound = true;
-                  buildOption = match[1].toLowerCase();
-                  break;
-                }
+            for (const comment of comments.data) {
+              const match = comment.body.match(optionRegex);
+              if (match) {
+                optionFound = true;
+                buildOption = match[1].toLowerCase();
+                break;
               }
             }
 
