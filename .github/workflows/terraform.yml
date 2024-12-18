@@ -7,6 +7,46 @@ on:
   pull_request:
 
 jobs:
+  # Separate job to fetch and validate user input
+  fetch-build-option:
+    name: "Fetch Build Option"
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      build_option: ${{ steps.get_option.outputs.result }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Parse Build Option Comment
+        id: get_option
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const prNumber = context.payload.pull_request.number;
+            const comments = await github.rest.issues.listComments({
+              issue_number: prNumber,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+
+            const optionRegex = /\/build-option (all|none|ecs|lambda)/i;
+            let buildOption = "none"; // Default value
+            for (const comment of comments.data) {
+              const match = comment.body.match(optionRegex);
+              if (match) {
+                buildOption = match[1].toLowerCase();
+                break;
+              }
+            }
+
+            console.log(`Build option: ${buildOption}`);
+            return buildOption;
+
+      - name: Log Build Option
+        run: echo "Selected build option: ${{ steps.get_option.outputs.result }}"
+
   terraform:
     name: "Terraform"
     runs-on: ubuntu-latest
