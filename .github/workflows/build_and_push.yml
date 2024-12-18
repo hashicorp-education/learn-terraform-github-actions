@@ -3,7 +3,7 @@ on:
   pull_request:
     types:
       - opened
-      - synchronize
+      # - synchronize
       - reopened
   push:
     branch:
@@ -30,36 +30,39 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const pr = github.context.payload.pull_request;
-            const issue = github.context.payload.issue || pr;
-            const prNumber = issue.number;
-            const repoOwner = github.context.repo.owner;
-            const repoName = github.context.repo.repo;
+            const context = github.context;
+
+            // Check if this is a comment on a pull request
+            const isPullRequest = context.payload.issue && context.payload.issue.pull_request;
+            if (!isPullRequest) {
+              console.log("This is not a pull request. Exiting gracefully.");
+              core.setOutput("build_option", "none");
+              core.setOutput("option_found", false);
+              return;
+            }
+
+            const prNumber = context.payload.issue.number;
+            const repoOwner = context.repo.owner;
+            const repoName = context.repo.repo;
 
             const optionRegex = /\/build-option (all|none|ecs|lambda)/i;
 
             let buildOption = "none"; // Default build option
             let optionFound = false; // Flag for whether an option is found
 
-            // Check PR body for the build option
-            if (pr?.body && optionRegex.test(pr.body)) {
-              optionFound = true;
-              buildOption = pr.body.match(optionRegex)[1].toLowerCase();
-            } else {
-              // If not found in the PR body, check comments
-              const comments = await github.rest.issues.listComments({
-                owner: repoOwner,
-                repo: repoName,
-                issue_number: prNumber,
-              });
+            // Check PR comments for the build option
+            const comments = await github.rest.issues.listComments({
+              owner: repoOwner,
+              repo: repoName,
+              issue_number: prNumber,
+            });
 
-              for (const comment of comments.data) {
-                const match = comment.body.match(optionRegex);
-                if (match) {
-                  optionFound = true;
-                  buildOption = match[1].toLowerCase();
-                  break;
-                }
+            for (const comment of comments.data) {
+              const match = comment.body.match(optionRegex);
+              if (match) {
+                optionFound = true;
+                buildOption = match[1].toLowerCase();
+                break;
               }
             }
 
@@ -69,41 +72,6 @@ jobs:
             // Set outputs for later steps
             core.setOutput("build_option", buildOption);
             core.setOutput("option_found", optionFound);
-          
-      - name: Debug Option Found
-        run: |
-          echo "Option found: ${{ steps.parse-comments.outputs.option_found }}"
-
-      - name: Set Build Option Output
-        id: set-option
-        run: |
-          echo "build_option=${{ steps.parse-comments.outputs.build_option }}" >> $GITHUB_OUTPUT
-          echo "option_found=${{ steps.parse-comments.outputs.option_found }}" >> $GITHUB_OUTPUT
-
-      - name: Post Build Option Required Comment (If Not Found)
-        if: ${{ steps.set-option.outputs.option_found == 'false' }}
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const prNumber = context.payload.pull_request.number;
-            const repoOwner = context.repo.owner;
-            const repoName = context.repo.repo;
-
-            const message = `### Build Option Required 🚀
-            Please specify the build option by commenting:
-            \`/build-option all|none|ecs|lambda\`
-
-            Example:
-            \`/build-option ecs\`
-
-            If no comment is provided, the default build option will be \`none\`.`;
-
-            await github.rest.issues.createComment({
-              issue_number: prNumber,
-              owner: repoOwner,
-              repo: repoName,
-              body: message,
-            });
 
   terraform:
     if: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
