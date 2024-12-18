@@ -30,11 +30,12 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
+            const context = github.context;
             const pr = context.payload.pull_request || null;
             const issue = context.payload.issue || pr;
 
-            if (!issue) {
-              console.log("No issue or pull request found in the context payload.");
+            if (!issue || !issue.number) {
+              console.log("No valid issue or pull request found in the context payload.");
               core.setOutput("build_option", "none");
               core.setOutput("option_found", false);
               return;
@@ -77,41 +78,6 @@ jobs:
             // Set outputs for later steps
             core.setOutput("build_option", buildOption);
             core.setOutput("option_found", optionFound);
-          
-      - name: Debug Option Found
-        run: |
-          echo "Option found: ${{ steps.parse-comments.outputs.option_found }}"
-
-      - name: Set Build Option Output
-        id: set-option
-        run: |
-          echo "build_option=${{ steps.parse-comments.outputs.build_option }}" >> $GITHUB_OUTPUT
-          echo "option_found=${{ steps.parse-comments.outputs.option_found }}" >> $GITHUB_OUTPUT
-
-      - name: Post Build Option Required Comment (If Not Found)
-        if: ${{ steps.set-option.outputs.option_found == 'false' }}
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const prNumber = context.payload.pull_request.number;
-            const repoOwner = context.repo.owner;
-            const repoName = context.repo.repo;
-
-            const message = `### Build Option Required 🚀
-            Please specify the build option by commenting:
-            \`/build-option all|none|ecs|lambda\`
-
-            Example:
-            \`/build-option ecs\`
-
-            If no comment is provided, the default build option will be \`none\`.`;
-
-            await github.rest.issues.createComment({
-              issue_number: prNumber,
-              owner: repoOwner,
-              repo: repoName,
-              body: message,
-            });
 
   terraform:
     if: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
