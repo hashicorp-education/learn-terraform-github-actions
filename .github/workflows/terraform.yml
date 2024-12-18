@@ -13,7 +13,8 @@ jobs:
     permissions:
       pull-requests: write
     outputs:
-      build_option: ${{ steps.set-option.outputs.build_option }}
+      build_option: ${{ steps.set-option.outputs.build_option }} # Outputs extracted build option
+      option_found: ${{ steps.set-option.outputs.option_found }} # Outputs option found status
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -56,13 +57,21 @@ jobs:
             }
 
             console.log(`Build option found: ${optionFound}, Value: ${buildOption}`);
-            return { buildOption, optionFound };
-        outputs:
-          build_option: ${{ steps.parse-comments.outputs.buildOption }}
-          option_found: ${{ steps.parse-comments.outputs.optionFound }}
+
+            // Set outputs
+            return {
+              build_option: buildOption,
+              option_found: optionFound
+            };
+
+      - name: Set Build Option Output
+        id: set-option
+        run: |
+          echo "build_option=${{ steps.parse-comments.outputs.result.build_option }}" >> $GITHUB_OUTPUT
+          echo "option_found=${{ steps.parse-comments.outputs.result.option_found }}" >> $GITHUB_OUTPUT
 
       - name: Post Build Option Required Comment (If Not Found)
-        if: steps.parse-comments.outputs.option_found == 'false'
+        if: steps.set-option.outputs.option_found == 'false'
         uses: actions/github-script@v6
         with:
           script: |
@@ -85,10 +94,6 @@ jobs:
               repo: repoName,
               body: message,
             });
-
-      - name: Set Build Option Output
-        id: set-option
-        run: echo "build_option=${{ steps.parse-comments.outputs.build_option }}" >> $GITHUB_OUTPUT
 
   terraform:
     needs: fetch-build-option
