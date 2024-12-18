@@ -13,12 +13,56 @@ jobs:
     permissions:
       pull-requests: write
     outputs:
-      build_option: ${{ steps.set-option.outputs.build_option }} # Job-level output
+      build_option: ${{ steps.set-option.outputs.build_option }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Request Build Option from User
+      - name: Parse PR Description and Comments for Build Option
+        id: parse-comments
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const prNumber = context.payload.pull_request.number;
+            const repoOwner = context.repo.owner;
+            const repoName = context.repo.repo;
+
+            // Check PR description
+            const prBody = context.payload.pull_request.body || '';
+            const optionRegex = /\/build-option (all|none|ecs|lambda)/i;
+
+            let buildOption = "none"; // Default value
+            let optionFound = false;
+
+            if (optionRegex.test(prBody)) {
+              optionFound = true;
+              buildOption = prBody.match(optionRegex)[1].toLowerCase();
+            } else {
+              // Check PR comments
+              const comments = await github.rest.issues.listComments({
+                issue_number: prNumber,
+                owner: repoOwner,
+                repo: repoName,
+              });
+
+              for (const comment of comments.data) {
+                const match = comment.body.match(optionRegex);
+                if (match) {
+                  optionFound = true;
+                  buildOption = match[1].toLowerCase();
+                  break;
+                }
+              }
+            }
+
+            console.log(`Build option found: ${optionFound}, Value: ${buildOption}`);
+            return { buildOption, optionFound };
+        outputs:
+          build_option: ${{ steps.parse-comments.outputs.buildOption }}
+          option_found: ${{ steps.parse-comments.outputs.optionFound }}
+
+      - name: Post Build Option Required Comment (If Not Found)
+        if: steps.parse-comments.outputs.option_found == 'false'
         uses: actions/github-script@v6
         with:
           script: |
@@ -42,34 +86,9 @@ jobs:
               body: message,
             });
 
-      - name: Parse Build Option Comment
-        id: parse-comment
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const prNumber = context.payload.pull_request.number;
-            const comments = await github.rest.issues.listComments({
-              issue_number: prNumber,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-            });
-
-            const optionRegex = /\/build-option (all|none|ecs|lambda)/i;
-            let buildOption = "none"; // Default value
-            for (const comment of comments.data) {
-              const match = comment.body.match(optionRegex);
-              if (match) {
-                buildOption = match[1].toLowerCase();
-                break;
-              }
-            }
-
-            console.log(`Build option: ${buildOption}`);
-            return buildOption; // Correct return value
-
       - name: Set Build Option Output
         id: set-option
-        run: echo "build_option=${{ steps.parse-comment.outputs.result }}" >> $GITHUB_OUTPUT
+        run: echo "build_option=${{ steps.parse-comments.outputs.build_option }}" >> $GITHUB_OUTPUT
 
   terraform:
     needs: fetch-build-option
