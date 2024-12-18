@@ -65,7 +65,7 @@ jobs:
             }
 
             console.log(`Build option: ${buildOption}`);
-            return buildOption; # Correct return value
+            return buildOption; // Correct return value
 
       - name: Set Build Option Output
         id: set-option
