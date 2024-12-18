@@ -1,7 +1,4 @@
-name: "Terraform"
-
-name: "Terraform"
-
+name: "Build and Push"
 on:
   pull_request:
     types:
