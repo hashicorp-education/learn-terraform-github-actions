@@ -30,7 +30,6 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const context = github.context;
             const pr = context.payload.pull_request || null;
             const issue = context.payload.issue || pr;
 
