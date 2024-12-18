@@ -30,26 +30,30 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const prNumber = context.payload.pull_request.number;
-            const repoOwner = context.repo.owner;
-            const repoName = context.repo.repo;
+            const core = require('@actions/core');
+            const github = require('@actions/github');
 
-            // Check PR description
-            const prBody = context.payload.pull_request.body || '';
+            const pr = github.context.payload.pull_request;
+            const issue = github.context.payload.issue || pr;
+            const prNumber = issue.number;
+            const repoOwner = github.context.repo.owner;
+            const repoName = github.context.repo.repo;
+
             const optionRegex = /\/build-option (all|none|ecs|lambda)/i;
 
-            let buildOption = "none"; // Default value
-            let optionFound = false;
+            let buildOption = "none"; // Default build option
+            let optionFound = false; // Flag for whether an option is found
 
-            if (optionRegex.test(prBody)) {
+            // Check PR body for the build option
+            if (pr?.body && optionRegex.test(pr.body)) {
               optionFound = true;
-              buildOption = prBody.match(optionRegex)[1].toLowerCase();
+              buildOption = pr.body.match(optionRegex)[1].toLowerCase();
             } else {
-              // Check PR comments
+              // If not found in the PR body, check comments
               const comments = await github.rest.issues.listComments({
-                issue_number: prNumber,
                 owner: repoOwner,
                 repo: repoName,
+                issue_number: prNumber,
               });
 
               for (const comment of comments.data) {
@@ -65,21 +69,19 @@ jobs:
             console.log(`Option Found: ${optionFound}`);
             console.log(`Build Option: ${buildOption}`);
 
-            // Return both values
-            return {
-              build_option: buildOption,
-              option_found: optionFound
-            };
+            // Set outputs for later steps
+            core.setOutput("build_option", buildOption);
+            core.setOutput("option_found", optionFound);
           
       - name: Debug Option Found
         run: |
-          echo "Option found: ${{ steps.set-option.outputs.option_found }}"
+          echo "Option found: ${{ steps.parse-comments.outputs.option_found }}"
 
       - name: Set Build Option Output
         id: set-option
         run: |
-          echo "build_option=${{ steps.parse-comments.outputs.result.build_option }}" >> $GITHUB_OUTPUT
-          echo "option_found=${{ steps.parse-comments.outputs.result.option_found }}" >> $GITHUB_OUTPUT
+          echo "build_option=${{ steps.parse-comments.outputs.build_option }}" >> $GITHUB_OUTPUT
+          echo "option_found=${{ steps.parse-comments.outputs.option_found }}" >> $GITHUB_OUTPUT
 
       - name: Post Build Option Required Comment (If Not Found)
         if: ${{ steps.set-option.outputs.option_found == 'false' }}
