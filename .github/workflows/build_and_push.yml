@@ -30,11 +30,20 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const pr = github.context.payload.pull_request;
-            const issue = github.context.payload.issue || pr;
+            const context = github.context;
+            const pr = context.payload.pull_request || null;
+            const issue = context.payload.issue || pr;
+
+            if (!issue) {
+              console.log("No issue or pull request found in the context payload.");
+              core.setOutput("build_option", "none");
+              core.setOutput("option_found", false);
+              return;
+            }
+
             const prNumber = issue.number;
-            const repoOwner = github.context.repo.owner;
-            const repoName = github.context.repo.repo;
+            const repoOwner = context.repo.owner;
+            const repoName = context.repo.repo;
 
             const optionRegex = /\/build-option (all|none|ecs|lambda)/i;
 
