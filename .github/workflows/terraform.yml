@@ -14,13 +14,13 @@ jobs:
     permissions:
       pull-requests: read
     outputs:
-      build_option: ${{ steps.get_option.outputs.result }}
+      build_option: ${{ steps.set-option.outputs.build_option }} # Properly expose output
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
       - name: Parse Build Option Comment
-        id: get_option
+        id: parse-comment
         uses: actions/github-script@v6
         with:
           script: |
@@ -44,9 +44,11 @@ jobs:
             console.log(`Build option: ${buildOption}`);
             return buildOption;
 
-      - name: Log Build Option
-        run: echo "Selected build option: ${{ steps.get_option.outputs.result }}"
+      - name: Set Build Option Output
+        id: set-option
+        run: echo "build_option=${{ steps.parse-comment.outputs.result }}" >> $GITHUB_OUTPUT
 
+  
   terraform:
     name: "Terraform"
     runs-on: ubuntu-latest
