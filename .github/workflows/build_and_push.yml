@@ -1,7 +1,4 @@
-name: "Terraform"
-
-name: "Terraform"
-
+name: "Build and Push"
 on:
   pull_request:
     types:
@@ -9,6 +6,8 @@ on:
       - synchronize
       - reopened
   push:
+    branch:
+      - main
   issue_comment:
     types:
       - created
