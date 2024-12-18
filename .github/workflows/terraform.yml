@@ -7,47 +7,96 @@ on:
   pull_request:
 
 jobs:
-  # Separate job to fetch and validate user input
   fetch-build-option:
     name: "Fetch Build Option"
     runs-on: ubuntu-latest
     permissions:
-      pull-requests: read
+      pull-requests: write
     outputs:
-      build_option: ${{ steps.get_option.outputs.result }}
+      build_option: ${{ steps.set-option.outputs.build_option }} # Outputs extracted build option
+      option_found: ${{ steps.set-option.outputs.option_found }} # Outputs option found status
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Parse Build Option Comment
-        id: get_option
+      - name: Parse PR Description and Comments for Build Option
+        id: parse-comments
         uses: actions/github-script@v6
         with:
           script: |
             const prNumber = context.payload.pull_request.number;
-            const comments = await github.rest.issues.listComments({
-              issue_number: prNumber,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-            });
+            const repoOwner = context.repo.owner;
+            const repoName = context.repo.repo;
 
+            // Check PR description
+            const prBody = context.payload.pull_request.body || '';
             const optionRegex = /\/build-option (all|none|ecs|lambda)/i;
+
             let buildOption = "none"; // Default value
-            for (const comment of comments.data) {
-              const match = comment.body.match(optionRegex);
-              if (match) {
-                buildOption = match[1].toLowerCase();
-                break;
+            let optionFound = false;
+
+            if (optionRegex.test(prBody)) {
+              optionFound = true;
+              buildOption = prBody.match(optionRegex)[1].toLowerCase();
+            } else {
+              // Check PR comments
+              const comments = await github.rest.issues.listComments({
+                issue_number: prNumber,
+                owner: repoOwner,
+                repo: repoName,
+              });
+
+              for (const comment of comments.data) {
+                const match = comment.body.match(optionRegex);
+                if (match) {
+                  optionFound = true;
+                  buildOption = match[1].toLowerCase();
+                  break;
+                }
               }
             }
 
-            console.log(`Build option: ${buildOption}`);
-            return buildOption;
+            console.log(`Build option found: ${optionFound}, Value: ${buildOption}`);
 
-      - name: Log Build Option
-        run: echo "Selected build option: ${{ steps.get_option.outputs.result }}"
+            // Set outputs
+            return {
+              build_option: buildOption,
+              option_found: optionFound
+            };
+
+      - name: Set Build Option Output
+        id: set-option
+        run: |
+          echo "build_option=${{ steps.parse-comments.outputs.result.build_option }}" >> $GITHUB_OUTPUT
+          echo "option_found=${{ steps.parse-comments.outputs.result.option_found }}" >> $GITHUB_OUTPUT
+
+      - name: Post Build Option Required Comment (If Not Found)
+        if: steps.set-option.outputs.option_found == 'false'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const prNumber = context.payload.pull_request.number;
+            const repoOwner = context.repo.owner;
+            const repoName = context.repo.repo;
+
+            const message = `### Build Option Required 🚀
+            Please specify the build option by commenting:
+            \`/build-option all|none|ecs|lambda\`
+
+            Example:
+            \`/build-option ecs\`
+
+            If no comment is provided, the default build option will be \`none\`.`;
+
+            await github.rest.issues.createComment({
+              issue_number: prNumber,
+              owner: repoOwner,
+              repo: repoName,
+              body: message,
+            });
 
   terraform:
+    needs: fetch-build-option
     name: "Terraform"
     runs-on: ubuntu-latest
     permissions:
@@ -59,7 +108,6 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v1
         with:
-          # terraform_version: 0.13.0:
           cli_config_credentials_token: ${{ secrets.TF_CLOUD_TOKEN }}
 
       - name: Terraform Format
@@ -77,17 +125,18 @@ jobs:
       - name: Terraform Plan
         id: plan
         if: github.event_name == 'pull_request'
-        run: terraform plan -no-color -input=false
+        run: |
+          echo "Selected Build Option: ${{ needs.fetch-build-option.outputs.build_option }}"
+          terraform plan -no-color -input=false > plan_output.txt
         continue-on-error: true
 
       - name: Update Pull Request
         uses: actions/github-script@v6
         if: github.event_name == 'pull_request'
-        env:
-          PLAN: ${{ steps.plan.outputs.stdout }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
+            const planOutput = require('fs').readFileSync('plan_output.txt', 'utf8');
             const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
             #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
             #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
@@ -95,8 +144,8 @@ jobs:
 
             <details><summary>Show Plan</summary>
 
-            \`\`\`terraform\n
-            ${process.env.PLAN}
+            \`\`\`terraform
+            ${planOutput}
             \`\`\`
 
             </details>
@@ -107,8 +156,8 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: output
-            })
+              body: output,
+            });
 
       - name: Terraform Plan Status
         if: steps.plan.outcome == 'failure'
