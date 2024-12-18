@@ -1,10 +1,17 @@
 name: "Terraform"
 
+name: "Terraform"
+
 on:
-  push:
-    branches:
-      - main
   pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+  push:
+  issue_comment:
+    types:
+      - created
 
 jobs:
   fetch-build-option:
@@ -56,14 +63,15 @@ jobs:
               }
             }
 
-            console.log(`Build option found: ${optionFound}, Value: ${buildOption}`);
+            console.log(`Option Found: ${optionFound}`);
+            console.log(`Build Option: ${buildOption}`);
 
-            // Set outputs
+            // Return both values
             return {
               build_option: buildOption,
               option_found: optionFound
             };
-            
+          
       - name: Debug Option Found
         run: |
           echo "Option found: ${{ steps.set-option.outputs.option_found }}"
@@ -100,6 +108,7 @@ jobs:
             });
 
   terraform:
+    if: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
     needs: fetch-build-option
     name: "Terraform"
     runs-on: ubuntu-latest
