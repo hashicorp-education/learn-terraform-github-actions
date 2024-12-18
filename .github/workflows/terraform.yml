@@ -7,17 +7,40 @@ on:
   pull_request:
 
 jobs:
-  # Separate job to fetch and validate user input
   fetch-build-option:
     name: "Fetch Build Option"
     runs-on: ubuntu-latest
     permissions:
-      pull-requests: read
+      pull-requests: write
     outputs:
-      build_option: ${{ steps.set-option.outputs.build_option }} # Properly expose output
+      build_option: ${{ steps.set-option.outputs.build_option }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+
+      - name: Request Build Option from User
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const prNumber = context.payload.pull_request.number;
+            const repoOwner = context.repo.owner;
+            const repoName = context.repo.repo;
+
+            const message = `### Build Option Required 🚀
+            Please specify the build option by commenting:
+            \`/build-option all|none|ecs|lambda\`
+
+            Example:
+            \`/build-option ecs\`
+
+            If no comment is provided, the default build option will be \`none\`.`;
+
+            await github.rest.issues.createComment({
+              issue_number: prNumber,
+              owner: repoOwner,
+              repo: repoName,
+              body: message,
+            });
 
       - name: Parse Build Option Comment
         id: parse-comment
@@ -42,14 +65,16 @@ jobs:
             }
 
             console.log(`Build option: ${buildOption}`);
-            return buildOption;
+            return { build_option: buildOption };
+        outputs:
+          build_option: ${{ steps.parse-comment.outputs.result }}
 
       - name: Set Build Option Output
         id: set-option
-        run: echo "build_option=${{ steps.parse-comment.outputs.result }}" >> $GITHUB_OUTPUT
+        run: echo "build_option=${{ steps.parse-comment.outputs.build_option }}" >> $GITHUB_OUTPUT
 
-  
   terraform:
+    needs: fetch-build-option
     name: "Terraform"
     runs-on: ubuntu-latest
     permissions:
@@ -61,7 +86,6 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v1
         with:
-          # terraform_version: 0.13.0:
           cli_config_credentials_token: ${{ secrets.TF_CLOUD_TOKEN }}
 
       - name: Terraform Format
@@ -79,17 +103,18 @@ jobs:
       - name: Terraform Plan
         id: plan
         if: github.event_name == 'pull_request'
-        run: terraform plan -no-color -input=false
+        run: |
+          echo "Selected Build Option: ${{ needs.fetch-build-option.outputs.build_option }}"
+          terraform plan -no-color -input=false > plan_output.txt
         continue-on-error: true
 
       - name: Update Pull Request
         uses: actions/github-script@v6
         if: github.event_name == 'pull_request'
-        env:
-          PLAN: ${{ steps.plan.outputs.stdout }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
+            const planOutput = require('fs').readFileSync('plan_output.txt', 'utf8');
             const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
             #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
             #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
@@ -97,8 +122,8 @@ jobs:
 
             <details><summary>Show Plan</summary>
 
-            \`\`\`terraform\n
-            ${process.env.PLAN}
+            \`\`\`terraform
+            ${planOutput}
             \`\`\`
 
             </details>
@@ -109,8 +134,8 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: output
-            })
+              body: output,
+            });
 
       - name: Terraform Plan Status
         if: steps.plan.outcome == 'failure'
