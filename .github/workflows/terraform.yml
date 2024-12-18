@@ -13,7 +13,7 @@ jobs:
     permissions:
       pull-requests: write
     outputs:
-      build_option: ${{ steps.set-option.outputs.build_option }}
+      build_option: ${{ steps.set-option.outputs.build_option }} # Job-level output
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -65,13 +65,11 @@ jobs:
             }
 
             console.log(`Build option: ${buildOption}`);
-            return { build_option: buildOption };
-        outputs:
-          build_option: ${{ steps.parse-comment.outputs.result }}
+            return buildOption; # Correct return value
 
       - name: Set Build Option Output
         id: set-option
-        run: echo "build_option=${{ steps.parse-comment.outputs.build_option }}" >> $GITHUB_OUTPUT
+        run: echo "build_option=${{ steps.parse-comment.outputs.result }}" >> $GITHUB_OUTPUT
 
   terraform:
     needs: fetch-build-option
