@@ -71,7 +71,7 @@ jobs:
           echo "option_found=${{ steps.parse-comments.outputs.result.option_found }}" >> $GITHUB_OUTPUT
 
       - name: Post Build Option Required Comment (If Not Found)
-        if: steps.set-option.outputs.option_found == 'false'
+        if: ${{ steps.set-option.outputs.option_found == 'false' }}
         uses: actions/github-script@v6
         with:
           script: |
