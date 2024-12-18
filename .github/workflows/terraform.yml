@@ -56,9 +56,10 @@ jobs:
               }
             }
 
-            console.log(`Build option found: ${optionFound}, Value: ${buildOption}`);
+            console.log(`Option Found: ${optionFound}`);
+            console.log(`Build Option: ${buildOption}`);
 
-            // Set outputs
+            // Return both values
             return {
               build_option: buildOption,
               option_found: optionFound
