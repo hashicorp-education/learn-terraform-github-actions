@@ -13,63 +13,44 @@ on:
       - created
 
 jobs:
-  fetch-build-option:
-    name: "Fetch Build Option"
+  post-build-option-instructions:
+    name: "Build Option Instructions"
     runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'pull_request'}}
     permissions:
       pull-requests: write
-    outputs:
-      build_option: ${{ steps.set-option.outputs.build_option }} # Outputs extracted build option
-      option_found: ${{ steps.set-option.outputs.option_found }} # Outputs option found status
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Parse PR Description and Comments for Build Option
-        id: parse-comments
+      - name: Post Instructions
+        id: post-build-options
         uses: actions/github-script@v6
         with:
           script: |
-            // Check if this is a comment on a pull request
-            const isPullRequest = context.payload.issue && context.payload.issue.pull_request;
-            if (!isPullRequest) {
-              console.log("This is not a pull request. Exiting gracefully.");
-              core.setOutput("build_option", "none");
-              core.setOutput("option_found", false);
-              return;
-            }
+            const output =  `
+              ### Attention To Build & Push Docker Containers: Set Build Group Label
+              Please set one of the following labels on this PR to define the Docker build group:
+              - **Docker-all**: Build all Docker images
+              - **Docker-lambda**: Build only Lambda-related Docker images
+              - **Docker-ECS**: Build only the ECS-related Docker images
+              By default no docker containers will be built if none of these labels are attached.
 
-            const prNumber = context.payload.issue.number;
-            const repoOwner = context.repo.owner;
-            const repoName = context.repo.repo;
+              ### Attention To Apply Terraform: Set Terraform Apply Label
+              Please set one of the following labels on this PR to define the Docker build group:
+              - **Terraform-apply**: Build all Docker images
+              By default no terraform apply action will be taken if this label is not attached.
 
-            const optionRegex = /\/build-option (all|none|ecs|lambda)/i;
 
-            let buildOption = "none"; // Default build option
-            let optionFound = false; // Flag for whether an option is found
+              You can apply the label in the right-hand sidebar of this PR.
+            `;
 
-            // Check PR comments for the build option
-            const comments = await github.rest.issues.listComments({
-              owner: repoOwner,
-              repo: repoName,
-              issue_number: prNumber,
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output,
             });
-
-            for (const comment of comments.data) {
-              const match = comment.body.match(optionRegex);
-              if (match) {
-                optionFound = true;
-                buildOption = match[1].toLowerCase();
-                break;
-              }
-            }
-
-            console.log(`Option Found: ${optionFound}`);
-            console.log(`Build Option: ${buildOption}`);
-
-            // Set outputs for later steps
-            core.setOutput("build_option", buildOption);
-            core.setOutput("option_found", optionFound);
 
   terraform:
     if: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
