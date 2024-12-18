@@ -54,7 +54,6 @@ jobs:
 
   terraform:
     if: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
-    needs: fetch-build-option
     name: "Terraform"
     runs-on: ubuntu-latest
     permissions:
