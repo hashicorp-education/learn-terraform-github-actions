@@ -36,7 +36,7 @@ jobs:
               ### To set pdal_runner Repo branch: Set PDAL Repo branch Label
               Please set one of the following labels on this PR to define the Docker build group:
               - **PDAL-dev**: Build with PDAL from branch dev
-              - **PDAL-<branch-name>**: Build with PDAL from branch <branch-name>
+              - **PDAL-[branch-name]**: Build with PDAL from branch [branch-name]
               By default the PDAL branch used is 'main'
 
               ### To Apply Terraform: Set Terraform Apply Label
