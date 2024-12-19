@@ -26,17 +26,24 @@ jobs:
         with:
           script: |
             const output =  `
-              ### Attention To Build & Push Docker Containers: Set Build Group Label
+              ### To Build & Push Docker Containers: Set Build Group Label
               Please set one of the following labels on this PR to define the Docker build group:
               - **Docker-all**: Build all Docker images
               - **Docker-lambda**: Build only Lambda-related Docker images
               - **Docker-ECS**: Build only the ECS-related Docker images
               By default no docker containers will be built if none of these labels are attached.
 
-              ### Attention To Apply Terraform: Set Terraform Apply Label
+              ### To set pdal_runner Repo branch: Set PDAL Repo branch Label
+              Please set one of the following labels on this PR to define the Docker build group:
+              - **PDAL-dev**: Build with PDAL from branch dev
+              - **PDAL-<branch-name>**: Build with PDAL from branch <branch-name>
+              By default the PDAL branch used is 'main'
+
+              ### To Apply Terraform: Set Terraform Apply Label
               Please set one of the following labels on this PR to define the Docker build group:
               - **Terraform-apply**: Build all Docker images
               By default no terraform apply action will be taken if this label is not attached.
+              
 
 
               You can apply the label in the right-hand sidebar of this PR.
