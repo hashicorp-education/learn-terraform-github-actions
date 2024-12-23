@@ -123,7 +123,10 @@ jobs:
       - name: Terraform Plan Status
         if: steps.plan.outcome == 'failure'
         run: exit 1
-
+      - name: Get Build Type
+        if: ${{ github.event.action == 'closed' }}
+        run: |
+          echo "This step runs only when a pull request is closed."
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: terraform apply -auto-approve -input=false
