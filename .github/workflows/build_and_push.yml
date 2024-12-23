@@ -3,11 +3,11 @@ on:
   pull_request:
     types:
       - opened
-      # - synchronize
       - reopened
-  push:
-    branches:
-      - main
+      - closed
+  # push:
+  #   branches:
+  #     - main
 
 jobs:
   post-build-option-instructions:
