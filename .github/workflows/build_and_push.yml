@@ -124,7 +124,7 @@ jobs:
         if: steps.plan.outcome == 'failure'
         run: exit 1
       - name: Get Build Type
-        if: ${{ github.event.action == 'closed' }}
+        if: ${{ github.event.pull_request.merged == true }}
         run: |
           echo "This step runs only when a pull request is closed."
       - name: Terraform Apply
