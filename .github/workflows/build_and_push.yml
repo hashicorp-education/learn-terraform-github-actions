@@ -124,7 +124,7 @@ jobs:
         if: steps.plan.outcome == 'failure'
         run: exit 1
       - name: Get Build Type
-        if: ${{ github.event.pull_request.merged == true }}
+        if: github.event.pull_request.merged == true
         run: |
           echo "This step runs only when a pull request is closed."
 
@@ -136,5 +136,5 @@ jobs:
           echo "$LABELS" | jq -r '.[] | "- \(.name)"'
           
       - name: Terraform Apply
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        if: github.event.pull_request.merged == true
         run: terraform apply -auto-approve -input=false
