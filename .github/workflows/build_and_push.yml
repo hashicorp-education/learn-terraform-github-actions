@@ -127,6 +127,11 @@ jobs:
         if: ${{ github.event.pull_request.merged == true }}
         run: |
           echo "This step runs only when a pull request is closed."
+      - name: Print GitHub Event Payload
+        env:
+          GITHUB_EVENT_PAYLOAD: ${{ toJson(github.event) }}
+        run: |
+          echo "Event Payload: $GITHUB_EVENT_PAYLOAD"
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: terraform apply -auto-approve -input=false
