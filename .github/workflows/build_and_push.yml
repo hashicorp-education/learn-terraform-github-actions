@@ -134,7 +134,9 @@ jobs:
         run: |
           echo "Extracting label names from PR..."
           echo "LABEL_NAMES: $LABELS_JSON"
-          LABEL_NAMES=$(echo "$LABELS_JSON" | jq -r '.[].name')
+          LABEL_NAMES=$(echo "$LABELS_JSON" | jq -r '.[].name' | tr '\n' ',')
+          # Remove the trailing comma
+          LABEL_NAMES=${LABEL_NAMES%,}
           echo "Label Names:"
           echo "$LABEL_NAMES"
           # Set the label names as an environment variable
