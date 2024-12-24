@@ -27,7 +27,6 @@ provider "aws" {
   region = "us-west-2"
 }
 
-# Fake change 234
 # resource "aws_security_group" "github-actions" {
 #   name        = "github-actions"
 #   description = "This is just a test for a github-actions tutorial."
