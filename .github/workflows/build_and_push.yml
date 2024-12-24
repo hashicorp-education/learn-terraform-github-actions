@@ -135,6 +135,12 @@ jobs:
           echo "Labels on this PR:"
           echo "$LABELS" | jq -r '.[] | "- \(.name)"'
           
+      - name: Print GitHub Event Context
+        env:
+          GITHUB_EVENT: ${{ toJSON(github.event) }}
+        run: |
+          echo "$GITHUB_EVENT"
+      
       - name: Terraform Apply
         if: github.event.pull_request.merged == true
         run: terraform apply -auto-approve -input=false
