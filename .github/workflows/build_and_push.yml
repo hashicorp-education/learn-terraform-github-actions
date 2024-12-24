@@ -132,9 +132,21 @@ jobs:
         env:
           LABELS: ${{ toJson(github.event.pull_request.labels) }}
         run: |
-          echo "Labels on this PR:"
-          echo "$LABELS" | jq -r '.[] | "- \(.name)"'
+          echo "Extracting label names from PR..."
+          LABEL_NAMES=$(jq -r '.[].name' <<< "${{ toJson(github.event.pull_request.labels) }}")
+          echo "Label Names:"
+          echo "$LABEL_NAMES"
+          # Set the label names as an environment variable
+          echo "pr_label_names=$LABEL_NAMES" >> $GITHUB_ENV
           
+
+      - name: Deploy Application
+        if: contains(env.pr_label_names, 'Docker-all')
+        run: |
+          echo "Deploying application..."
+          echo "PR Label Names: $pr_label_names"
+
+
       - name: Print GitHub Event Context
         env:
           GITHUB_EVENT: ${{ toJSON(github.event) }}
