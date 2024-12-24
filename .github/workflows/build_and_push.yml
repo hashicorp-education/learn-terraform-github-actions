@@ -139,29 +139,29 @@ jobs:
           echo "pr_label_names=$LABEL_NAMES" >> $GITHUB_ENV
           
 
-          - name: Build and Push Docker Images
-          run: |
-            echo "Determining which Docker images to build based on labels..."
-            case "$pr_label_names" in
-              *Docker-all*)
-                echo "Matched label: Docker-all"
-                echo "Building All Docker Images."
-                echo "Pushing Up All Docker Images."
-                ;;
-              *Docker-lambda*)
-                echo "Matched label: Docker-lambda"
-                echo "Building Lambda Docker Images."
-                echo "Pushing Up Lambda Docker Images."
-                ;;
-              *Docker-ecs*)
-                echo "Matched label: Docker-ecs"
-                echo "Building ECS Docker Images."
-                echo "Pushing Up ECS Docker Images."
-                ;;
-              *)
-                echo "No matching labels found. Skipping Docker builds."
-                ;;
-            esac
+      - name: Build and Push Docker Images
+        run: |
+          echo "Determining which Docker images to build based on labels..."
+          case "$pr_label_names" in
+            *Docker-all*)
+              echo "Matched label: Docker-all"
+              echo "Building All Docker Images."
+              echo "Pushing Up All Docker Images."
+              ;;
+            *Docker-lambda*)
+              echo "Matched label: Docker-lambda"
+              echo "Building Lambda Docker Images."
+              echo "Pushing Up Lambda Docker Images."
+              ;;
+            *Docker-ecs*)
+              echo "Matched label: Docker-ecs"
+              echo "Building ECS Docker Images."
+              echo "Pushing Up ECS Docker Images."
+              ;;
+            *)
+              echo "No matching labels found. Skipping Docker builds."
+              ;;
+          esac
 
 
       - name: Print GitHub Event Context
