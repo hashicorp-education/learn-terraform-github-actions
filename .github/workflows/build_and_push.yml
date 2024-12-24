@@ -153,7 +153,6 @@ jobs:
               ;;
           esac
 
-
       - name: Print GitHub Event Context
         env:
           GITHUB_EVENT: ${{ toJSON(github.event) }}
@@ -163,3 +162,10 @@ jobs:
       - name: Terraform Apply
         if: github.event.pull_request.merged == true
         run: terraform apply -auto-approve -input=false
+
+      - name: Build Docker Container
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          tags: your_dockerhub_username/your_repository_name:latest
