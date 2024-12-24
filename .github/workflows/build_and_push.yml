@@ -10,7 +10,7 @@ on:
   #     - main
 
 jobs:
-  post-build-option-instructions:
+  Retrieve Build Options:
     name: "Build Option Instructions"
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'pull_request'}}
