@@ -123,10 +123,6 @@ jobs:
       - name: Terraform Plan Status
         if: steps.plan.outcome == 'failure'
         run: exit 1
-      - name: Get Build Type
-        if: github.event.pull_request.merged == true
-        run: |
-          echo "This step runs only when a pull request is closed."
 
       - name: Print PR Labels
         env:
@@ -143,11 +139,29 @@ jobs:
           echo "pr_label_names=$LABEL_NAMES" >> $GITHUB_ENV
           
 
-      - name: Deploy Application
-        if: contains(env.pr_label_names, 'Docker-all')
-        run: |
-          echo "Deploying application..."
-          echo "PR Label Names: $pr_label_names"
+          - name: Build and Push Docker Images
+          run: |
+            echo "Determining which Docker images to build based on labels..."
+            case "$pr_label_names" in
+              *Docker-all*)
+                echo "Matched label: Docker-all"
+                echo "Building All Docker Images."
+                echo "Pushing Up All Docker Images."
+                ;;
+              *Docker-lambda*)
+                echo "Matched label: Docker-lambda"
+                echo "Building Lambda Docker Images."
+                echo "Pushing Up Lambda Docker Images."
+                ;;
+              *Docker-ecs*)
+                echo "Matched label: Docker-ecs"
+                echo "Building ECS Docker Images."
+                echo "Pushing Up ECS Docker Images."
+                ;;
+              *)
+                echo "No matching labels found. Skipping Docker builds."
+                ;;
+            esac
 
 
       - name: Print GitHub Event Context
