@@ -2,7 +2,7 @@
 FROM alpine:latest
 
 # Define the message as an environment variable
-ENV MESSAGE="Hello, this is a message from the Docker container!"
+ENV MESSAGE="Greetings from Dockerfile2!"
 
 # Set the command to echo the message
 CMD echo $MESSAGE

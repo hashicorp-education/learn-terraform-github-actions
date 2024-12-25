@@ -123,35 +123,46 @@ jobs:
           LABEL_NAMES=$(echo "$LABELS_JSON" | jq -r '.[].name' | tr '\n' ',')
           # Remove the trailing comma
           LABEL_NAMES=${LABEL_NAMES%,}
+          # Initialize an empty array for Docker images
+          DOCKER_IMAGES=()
           echo "Label Names:"
           echo "$LABEL_NAMES"
           # Set the label names as an environment variable
           echo "pr_label_names=$LABEL_NAMES" >> $GITHUB_ENV
-          
-
-      - name: Build and Push Docker Images
-        run: |
           echo "Determining which Docker images to build based on labels..."
           case "$pr_label_names" in
             *Docker-all*)
               echo "Matched label: Docker-all"
               echo "Building All Docker Images."
               echo "Pushing Up All Docker Images."
+              DOCKER_IMAGES+=("Dockerfile1" "Dockerfile2" "Dockerfile3") # Add all your app names here
               ;;
             *Docker-lambda*)
               echo "Matched label: Docker-lambda"
               echo "Building Lambda Docker Images."
               echo "Pushing Up Lambda Docker Images."
+              DOCKER_IMAGES+=("Dockerfile4")
               ;;
             *Docker-ecs*)
               echo "Matched label: Docker-ecs"
               echo "Building ECS Docker Images."
               echo "Pushing Up ECS Docker Images."
+              DOCKER_IMAGES+=("Dockerfile5")
               ;;
             *)
               echo "No matching labels found. Skipping Docker builds."
               ;;
           esac
+
+          # Convert the array to a JSON array string
+          DOCKER_IMAGES_JSON=$(printf '%s\n' "${DOCKER_IMAGES[@]}" | jq -R . | jq -s .)
+          echo "Docker Images to Build: $DOCKER_IMAGES_JSON"
+          # Set the Docker images as an output
+          echo "docker_images=$DOCKER_IMAGES_JSON" >> $GITHUB_OUTPUT
+
+      - name: Build and Push Docker Images
+        run: |
+          
 
       - name: Print GitHub Event Context
         env:
@@ -163,9 +174,30 @@ jobs:
         if: github.event.pull_request.merged == true
         run: terraform apply -auto-approve -input=false
 
-      - name: Build Docker Container
+      # - name: Build Docker Container
+      #   uses: docker/build-push-action@v6
+      #   with:
+      #     context: .
+      #     push: false
+      #     tags: your_dockerhub_username/your_repository_name:latest
+
+  build:
+    needs: extract-and-build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        image: ${{ fromJson(needs.extract-and-build.outputs.docker_images) }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
         uses: docker/build-push-action@v6
         with:
           context: .
+          file: Dockerfile.${{ matrix.image }}
           push: false
-          tags: your_dockerhub_username/your_repository_name:latest
+          tags: temp/${{ matrix.image }}:latest
