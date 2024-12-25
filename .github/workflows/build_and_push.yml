@@ -185,7 +185,7 @@ jobs:
 
   build:
     needs: Retrieve-Build-Options
-    if: Retrieve-Build-Options.outputs.should_proceed == 'true'
+    if: needs.Retrieve-Build-Options.outputs.should_proceed == 'true'
     runs-on: ubuntu-latest
     strategy:
       matrix:
