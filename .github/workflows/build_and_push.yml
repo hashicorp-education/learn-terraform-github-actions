@@ -127,10 +127,8 @@ jobs:
           DOCKER_IMAGES=()
           echo "Label Names:"
           echo "$LABEL_NAMES"
-          # Set the label names as an environment variable
-          echo "pr_label_names=$LABEL_NAMES" >> $GITHUB_ENV
           echo "Determining which Docker images to build based on labels..."
-          case "$pr_label_names" in
+          case "$LABEL_NAMES" in
             *Docker-all*)
               echo "Matched label: Docker-all"
               echo "Building All Docker Images."
