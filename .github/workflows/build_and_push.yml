@@ -157,11 +157,7 @@ jobs:
           DOCKER_IMAGES_JSON=$(printf '%s\n' "${DOCKER_IMAGES[@]}" | jq -R . | jq -s .)
           echo "Docker Images to Build: $DOCKER_IMAGES_JSON"
           # Set the Docker images as an output
-          echo "docker_images=$DOCKER_IMAGES_JSON" >> $GITHUB_OUTPUT
-
-      - name: Build and Push Docker Images
-        run: |
-          
+          echo "docker_images=$DOCKER_IMAGES_JSON" >> $GITHUB_OUTPUT          
 
       - name: Print GitHub Event Context
         env:
