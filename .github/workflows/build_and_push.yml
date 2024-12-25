@@ -189,7 +189,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        image: ${{ fromJson(Retrieve-Build-Options.outputs.docker_images) }}
+        image: ${{ fromJson(needs.Retrieve-Build-Options.outputs.docker_images) }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
