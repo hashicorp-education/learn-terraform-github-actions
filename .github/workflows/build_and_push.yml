@@ -182,11 +182,11 @@ jobs:
       #     tags: your_dockerhub_username/your_repository_name:latest
 
   build:
-    needs: extract-and-build
+    needs: Retrieve-Build-Options
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        image: ${{ fromJson(needs.extract-and-build.outputs.docker_images) }}
+        image: ${{ fromJson(needs.Retrieve-Build-Options.outputs.docker_images) }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
