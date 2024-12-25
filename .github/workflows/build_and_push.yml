@@ -155,9 +155,16 @@ jobs:
 
           # Convert the array to a JSON array string
           DOCKER_IMAGES_JSON=$(printf '%s\n' "${DOCKER_IMAGES[@]}" | jq -R . | jq -s .)
-          echo "Docker Images to Build: $DOCKER_IMAGES_JSON"
-          # Set the Docker images as an output
-          echo "docker_images=$DOCKER_IMAGES_JSON" >> $GITHUB_OUTPUT          
+          # Check if DOCKER_IMAGES array is empty
+          if [ ${#DOCKER_IMAGES[@]} -eq 0 ]; then
+            echo "No Docker images to build."
+            echo "should_proceed=false" >> $GITHUB_OUTPUT
+          else
+            echo "Docker images to build: ${DOCKER_IMAGES[@]}"
+            echo "should_proceed=true" >> $GITHUB_OUTPUT
+            # Set the Docker images as an output
+            echo "docker_images=$DOCKER_IMAGES_JSON" >> $GITHUB_OUTPUT 
+          fi         
 
       - name: Print GitHub Event Context
         env:
@@ -178,10 +185,11 @@ jobs:
 
   build:
     needs: Retrieve-Build-Options
+    if: Retrieve-Build-Options.outputs.should_proceed == 'true'
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        image: ${{ fromJson(needs.Retrieve-Build-Options.outputs.docker_images) }}
+        image: ${{ fromJson(Retrieve-Build-Options.outputs.docker_images) }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
