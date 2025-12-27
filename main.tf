@@ -15,7 +15,7 @@ terraform {
   required_version = ">= 1.1.0"
 
   cloud {
-    organization = "REPLACE_ME"
+    organization = "Dev-Threat_Detection_Lab"
 
     workspaces {
       name = "gh-actions-demo"
