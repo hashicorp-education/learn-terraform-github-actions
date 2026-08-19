@@ -4,14 +4,14 @@ on:
   pull_request:
 
 env:
-  TF_CLOUD_ORGANIZATION: "YOUR-ORGANIZATION-HERE"
+  TF_CLOUD_ORGANIZATION: "ibm-bp"
   TF_API_TOKEN: "${{ secrets.TF_API_TOKEN }}"
   TF_WORKSPACE: "learn-terraform-github-actions"
   CONFIG_DIRECTORY: "./"
 
 jobs:
   terraform:
-    if: github.repository != 'hashicorp-education/learn-terraform-github-actions'
+    if: github.repository != 'iftiali/learn-terraform-github-actions-working'
     name: "Terraform Plan"
     runs-on: ubuntu-latest
     permissions:
